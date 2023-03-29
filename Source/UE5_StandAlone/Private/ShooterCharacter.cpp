@@ -3,6 +3,7 @@
 
 #include "ShooterCharacter.h"
 
+#include "BaseProjectile.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
@@ -139,6 +140,39 @@ bool AShooterCharacter::IsZoomIn() const
 	return bIsZoomIn;
 }
 
+void AShooterCharacter::Fire()
+{
+	// 프로젝타일 발사를 시도합니다.
+	if (ProjectileClass)
+	{
+		// 카메라 트랜스폼을 구합니다.
+		FVector CameraLocation;
+		FRotator CameraRotation;
+		GetActorEyesViewPoint(CameraLocation, CameraRotation);
+
+		// MuzzleOffset 을 카메라 스페이스에서 월드 스페이스로 변환합니다.
+		FVector MuzzleLocation = CameraLocation + FTransform(CameraRotation).TransformVector(MuzzleOffset);
+		FRotator MuzzleRotation = CameraRotation;
+		// 조준을 약간 윗쪽으로 올려줍니다.
+		MuzzleRotation.Pitch += 10.0f;
+		UWorld* World = GetWorld();
+		if (World)
+		{
+			FActorSpawnParameters SpawnParams;
+			SpawnParams.Owner = this;
+			SpawnParams.Instigator = GetInstigator();
+			// 총구 위치에 발사체를 스폰시킵니다.
+			ABaseProjectile* Projectile = World->SpawnActor<ABaseProjectile>(ProjectileClass, MuzzleLocation, MuzzleRotation, SpawnParams);
+			if (Projectile)
+			{
+				// 발사 방향을 알아냅니다.
+				FVector LaunchDirection = MuzzleRotation.Vector();
+				Projectile->FireDirection(LaunchDirection);
+			}
+		}
+	}
+}
+
 void AShooterCharacter::OnCameraUpdate(const FVector& CameraLocation, const FRotator& CameraRotation) const
 {
 	USkeletalMeshComponent* DefMesh1P = Cast<USkeletalMeshComponent>(GetClass()->GetDefaultSubobjectByName(TEXT("PawnMesh1P")));
@@ -184,6 +218,7 @@ void AShooterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 
 	PlayerInputComponent->BindAction("Zoom", IE_Pressed, this, &AShooterCharacter::OnStartZoomIn);
 	PlayerInputComponent->BindAction("Zoom", IE_Released, this, &AShooterCharacter::OnStopZoomIn);
-	
+
+	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &AShooterCharacter::Fire);
 }
 

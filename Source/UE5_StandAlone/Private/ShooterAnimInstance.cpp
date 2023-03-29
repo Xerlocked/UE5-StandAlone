@@ -27,8 +27,12 @@ void UShooterAnimInstance::UpdateAnimationProperties(float DeltaTime)
 		bIsJumping = ShooterCharacter->GetCharacterMovement()->Velocity.Z > 1.0f ? true : false;
 
 		bIsAccelerating = ShooterCharacter->GetCharacterMovement()->GetCurrentAcceleration().Size() > 0.0f ? true : false;
+
+		bIsAiming = ShooterCharacter->IsZoomIn();
 		
 		JumpTime = bIsJumping ? JumpTime += DeltaTime : 0;
+
+		
 	}
 }
 

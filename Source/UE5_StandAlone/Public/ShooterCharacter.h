@@ -37,9 +37,18 @@ class UE5_STANDALONE_API AShooterCharacter : public ACharacter
 	
 public:
 	AShooterCharacter();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game|Weapon")
+	FVector MuzzleOffset;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Game|Projectile")
+	TSubclassOf<class ABaseProjectile> ProjectileClass;
 	
 	UFUNCTION(BlueprintCallable, Category = "Game|Weapon")
 	bool IsZoomIn() const;
+
+	UFUNCTION()
+	void Fire();
 
 	void OnCameraUpdate(const FVector& CameraLocation, const FRotator& CameraRotation) const;
 

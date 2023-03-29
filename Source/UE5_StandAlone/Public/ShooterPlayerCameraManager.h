@@ -23,4 +23,11 @@ public:
 	float ZoomFOV;
 
 	virtual void UpdateCamera(float DeltaTime) override;
+
+private:
+	FVector DefaultCameraLocation;
+	FVector NewCameraLocation;
+
+	FRotator DefaultCameraRotator;
+	FRotator NewCameraRotator;
 };
