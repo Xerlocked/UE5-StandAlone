@@ -6,7 +6,8 @@
 #include "ShooterCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
-UShooterAnimInstance::UShooterAnimInstance() : Speed(0), bIsJumping(false), bIsAccelerating(false), JumpTime(0)
+UShooterAnimInstance::UShooterAnimInstance() : Speed(0), bIsJumping(false), bIsAccelerating(false),
+JumpTime(0), bIsAiming(false), bIsFiring(false), bIsSprinting(false)
 {
 	
 }
@@ -29,10 +30,10 @@ void UShooterAnimInstance::UpdateAnimationProperties(float DeltaTime)
 		bIsAccelerating = ShooterCharacter->GetCharacterMovement()->GetCurrentAcceleration().Size() > 0.0f ? true : false;
 
 		bIsAiming = ShooterCharacter->IsZoomIn();
-		
-		JumpTime = bIsJumping ? JumpTime += DeltaTime : 0;
 
-		
+		bIsFiring = ShooterCharacter->IsFiring();
+
+		bIsSprinting = ShooterCharacter->IsSprinting();
 	}
 }
 
