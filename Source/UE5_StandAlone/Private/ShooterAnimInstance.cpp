@@ -3,6 +3,7 @@
 
 #include "ShooterAnimInstance.h"
 
+#include "KismetAnimationLibrary.h"
 #include "ShooterCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
@@ -25,6 +26,10 @@ void UShooterAnimInstance::UpdateAnimationProperties(float DeltaTime)
 		Velocity.Z = 0;
 		Speed = Velocity.Size();
 
+		const FRotator ShooterRotator { ShooterCharacter->GetActorRotation() };
+
+		Direction = UKismetAnimationLibrary::CalculateDirection(Velocity, ShooterRotator);
+
 		bIsJumping = ShooterCharacter->GetCharacterMovement()->Velocity.Z > 1.0f ? true : false;
 
 		bIsAccelerating = ShooterCharacter->GetCharacterMovement()->GetCurrentAcceleration().Size() > 0.0f ? true : false;
@@ -34,6 +39,8 @@ void UShooterAnimInstance::UpdateAnimationProperties(float DeltaTime)
 		bIsFiring = ShooterCharacter->IsFiring();
 
 		bIsSprinting = ShooterCharacter->IsSprinting();
+
+		CurrentWeaponName = ShooterCharacter->GetCurrentWeaponName();
 	}
 }
 

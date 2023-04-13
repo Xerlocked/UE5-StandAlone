@@ -6,9 +6,7 @@
 #include "Animation/AnimInstance.h"
 #include "ShooterAnimInstance.generated.h"
 
-/**
- * 
- */
+enum class EWeaponName : uint8;
 UCLASS()
 class UE5_STANDALONE_API UShooterAnimInstance : public UAnimInstance
 {
@@ -30,6 +28,9 @@ protected:
 	float Speed;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
+	float Direction;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
 	bool bIsJumping;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
@@ -46,4 +47,7 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
 	bool bIsSprinting;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
+	EWeaponName CurrentWeaponName;
 };

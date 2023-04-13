@@ -6,6 +6,14 @@
 #include "GameFramework/Actor.h"
 #include "BaseWeapon.generated.h"
 
+UENUM(BlueprintType)
+enum class EWeaponName : uint8
+{
+	Knife = 0 UMETA(DisplayName = "Knife"),
+	Ak47 UMETA(DisplayName = "Ak47"),
+	Eagle UMETA(DisplayName = "Eagle")
+};
+
 
 UENUM()
 enum class EWeaponType : uint8
@@ -85,6 +93,10 @@ public:
 	void StopFire();
 
 	EWeaponState GetCurrentState() const;
+
+	EWeaponName GetWeaponName() const;
+
+	EWeaponType GetWeaponType() const;
 	
 	/** attaches weapon mesh to pawn's mesh */
 	void AttachMeshToPawn();
@@ -96,7 +108,7 @@ public:
 	
 protected:
 	UPROPERTY()
-	TObjectPtr<class AShooterCharacter> MyPawn;
+	TObjectPtr<AShooterCharacter> MyPawn;
 
 	/** weapon data */
 	UPROPERTY(EditDefaultsOnly, Category=Config)
@@ -107,6 +119,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category=Weapon)
 	EWeaponType WeaponType;
+
+	UPROPERTY(EditDefaultsOnly, Category=Weapon)
+	EWeaponName WeaponName;
 
 	UPROPERTY(EditDefaultsOnly, Category=Effects)
 	FName MuzzleAttachPoint;

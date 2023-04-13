@@ -25,8 +25,8 @@ void AShooterPlayerCameraManager::UpdateCamera(float DeltaTime)
 
 	Super::UpdateCamera(DeltaTime);
 
-	if (MyPawn)
-	{
-		MyPawn->OnCameraUpdate(GetCameraLocation(), GetCameraRotation());
-	}
+	// if (MyPawn)
+	// {
+	// 	MyPawn->OnCameraUpdate(GetCameraLocation(), GetCameraRotation());
+	// }
 }

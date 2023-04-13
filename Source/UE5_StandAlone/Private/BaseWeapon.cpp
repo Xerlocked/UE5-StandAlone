@@ -99,6 +99,16 @@ EWeaponState ABaseWeapon::GetCurrentState() const
 	return CurrentWeaponState;
 }
 
+EWeaponName ABaseWeapon::GetWeaponName() const
+{
+	return WeaponName;
+}
+
+EWeaponType ABaseWeapon::GetWeaponType() const
+{
+	return WeaponType;
+}
+
 FVector ABaseWeapon::GetAdjustedAim() const
 {
 	const AShooterPlayerController* PlayerController = GetInstigatorController<AShooterPlayerController>();
