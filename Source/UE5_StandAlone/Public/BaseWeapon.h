@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "NiagaraFunctionLibrary.h"
 #include "BaseWeapon.generated.h"
 
 UENUM(BlueprintType)
@@ -67,7 +68,7 @@ struct FWeaponData
 	}
 };
 
-
+class UCameraComponent;
 UCLASS(Abstract, Blueprintable)
 class UE5_STANDALONE_API ABaseWeapon : public AActor
 {
@@ -97,6 +98,8 @@ public:
 	EWeaponName GetWeaponName() const;
 
 	EWeaponType GetWeaponType() const;
+
+	USkeletalMeshComponent* GetMesh1P() const;
 	
 	/** attaches weapon mesh to pawn's mesh */
 	void AttachMeshToPawn();
@@ -122,7 +125,7 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category=Weapon)
 	EWeaponName WeaponName;
-
+	
 	UPROPERTY(EditDefaultsOnly, Category=Effects)
 	FName MuzzleAttachPoint;
 
@@ -150,6 +153,8 @@ protected:
 
 	bool CanFire() const;
 
+	void SetCurrentFireAnim(UAnimMontage* NewAnimMontage);
+	
 	virtual void SimulateWeaponFire();
 
 	virtual void StopSimulatingWeaponFire();
@@ -165,19 +170,22 @@ private:
 	/** weapon mesh: 3rd person view */
 	UPROPERTY(VisibleDefaultsOnly, Category=Mesh)
 	USkeletalMeshComponent* Mesh3P;
-
-	UPROPERTY(EditDefaultsOnly)
-	UParticleSystem* MuzzleFX;
+	
+	UPROPERTY(EditDefaultsOnly, Category=Effects)
+	UNiagaraSystem* MuzzleFX;
 
 	UPROPERTY(Transient)
-	UParticleSystemComponent* MuzzlePSC;
+	UNiagaraComponent* MuzzleNC;
 
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category=Weapon)
 	UAnimMontage* FireAnim;
 
-	UPROPERTY(EditDefaultsOnly)
-	FName MuzzleSocketName;
+	UPROPERTY(EditDefaultsOnly, Category=Weapon)
+	UAnimMontage* FireAnimAds;
 
+	UPROPERTY()
+	UAnimMontage* CurrentFireAnim;
+	
 	bool bPlayingFireAnim;
 	
 	EWeaponState CurrentWeaponState;
@@ -192,9 +200,9 @@ private:
 
 	virtual void HandleFiring();
 	
-	void SetWeaponState(EWeaponState NewState);
-
 	void DetermineWeaponState();
+
+	void SetWeaponState(EWeaponState NewState);
 
 	void OnBurstStarted();
 

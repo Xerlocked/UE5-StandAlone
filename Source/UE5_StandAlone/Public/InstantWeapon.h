@@ -14,7 +14,7 @@ struct FInstantWeaponData
 	/** base weapon spread (degrees) */
 	UPROPERTY(EditDefaultsOnly, Category=Accuracy)
 	float WeaponSpread;
-
+	
 	/** targeting spread modifier */
 	UPROPERTY(EditDefaultsOnly, Category=Accuracy)
 	float TargetingSpreadMod;
@@ -81,9 +81,7 @@ class UE5_STANDALONE_API AInstantWeapon : public ABaseWeapon
 	UPROPERTY(EditDefaultsOnly)
 	int32 TracerRoundInterval;
 	
-	int32 BulletsShotCount;
-	
-public:
+	int32 BulletsShotCount = 0;
 
 protected:
 	/** current spread from continuous firing */
@@ -101,7 +99,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category=Effects)
 	UParticleSystem* TrailFX;
 
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category=Effects)
 	UParticleSystem* TracerFX;
 
 	/** param name for beam target in smoke trail */
@@ -110,6 +108,12 @@ protected:
 	
 	void ProcessInstantHit(const FHitResult& Impact, const FVector& Origin, const FVector& ShootDir, int32 RandomSeed, float ReticleSpread);
 
+	void ProcessInstantHitVerify(const FHitResult& ImpactResult,  const FVector& ShootDirection);
+
+	void ProcessPlayerDamage(const FHitResult& ImpactResult, const FVector& ShootDirection);
+
+	void SimulateHitResult(const FVector& ImpactPoint);
+	
 	void SpawnTrailEffect(const FVector& EndPoint);
 
 	void SpawnImpactEffects(const FHitResult& Impact);

@@ -5,7 +5,8 @@
 
 #include "ShooterCharacter.h"
 #include "ShooterPlayerController.h"
-#include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetSystemLibrary.h"
+
 
 void ABaseWeapon::PostInitializeComponents()
 {
@@ -37,11 +38,9 @@ ABaseWeapon::ABaseWeapon()
 	// Mesh3P->SetCollisionResponseToChannel(COLLISION_PROJECTILE, ECR_Block);
 	Mesh3P->SetupAttachment(Mesh1P);
 
-
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.TickGroup = TG_PrePhysics;
-
-	MuzzleSocketName = TEXT("GripPoint");
+	
 	CurrentWeaponState = EWeaponState::Idle;
 	WeaponConfig.bInfiniteAmmo = false;
 	WeaponConfig.bInfiniteClip = false;
@@ -109,9 +108,15 @@ EWeaponType ABaseWeapon::GetWeaponType() const
 	return WeaponType;
 }
 
+USkeletalMeshComponent* ABaseWeapon::GetMesh1P() const
+{
+	return Mesh1P;
+}
+
 FVector ABaseWeapon::GetAdjustedAim() const
 {
 	const AShooterPlayerController* PlayerController = GetInstigatorController<AShooterPlayerController>();
+
 	FVector FinalAim = FVector::ZeroVector;
 	// If we have a player controller use it for the aim
 	if (PlayerController)
@@ -128,8 +133,9 @@ FVector ABaseWeapon::GetAdjustedAim() const
 FVector ABaseWeapon::GetCameraAim() const
 {
 	const AShooterPlayerController* PlayerController = GetInstigatorController<AShooterPlayerController>();
-	FVector FinalAim = FVector::ZeroVector;
 
+	FVector FinalAim = FVector::ZeroVector;
+	
 	if (PlayerController)
 	{
 		FVector CamLoc;
@@ -141,7 +147,7 @@ FVector ABaseWeapon::GetCameraAim() const
 	{
 		FinalAim = GetInstigator()->GetBaseAimRotation().Vector();		
 	}
-
+	
 	return FinalAim;
 }
 
@@ -161,17 +167,15 @@ FVector ABaseWeapon::GetCameraDamageStartLocation(const FVector& AimDir) const
 {
 	AShooterPlayerController* PC = MyPawn ? Cast<AShooterPlayerController>(MyPawn.Get()->Controller) : nullptr;
 	FVector OutStartTrace = FVector::ZeroVector;
-
+	
 	if (PC)
 	{
 		// use player's camera
 		FRotator UnusedRot;
 		PC->GetPlayerViewPoint(OutStartTrace, UnusedRot);
-
 		// Adjust trace so there is nothing blocking the ray between the camera and the pawn, and calculate distance from adjusted start
 		OutStartTrace = OutStartTrace + AimDir * ((GetInstigator()->GetActorLocation() - OutStartTrace) | AimDir);
 	}
-
 	return OutStartTrace;
 }
 
@@ -184,6 +188,27 @@ FHitResult ABaseWeapon::WeaponTrace(const FVector& From, const FVector& To) cons
 	FHitResult Hit(ForceInit);
 	GetWorld()->LineTraceSingleByChannel(Hit, From, To, ECC_Visibility, TraceParams);
 
+	if(Hit.GetActor())
+	{
+		UE_LOG(LogTemp, Log, TEXT("%s"), *Hit.GetActor()->GetName());
+	}
+
+	FHitResult HitResultDebug = Hit;
+
+	TArray<AActor*> ActorsToIgnore;
+	UKismetSystemLibrary::LineTraceSingle(GetWorld(), From, To,
+		ETraceTypeQuery::TraceTypeQuery1, false, ActorsToIgnore, EDrawDebugTrace::ForDuration, HitResultDebug, true);
+
+	
+	// Draw Debug Line
+	// DrawDebugLine(
+	// 			GetWorld(),
+	// 			From,
+	// 			To,
+	// 			FColor(255, 0, 0),
+	// 			false, 10, 0,
+	// 			12.333
+	// 		);
 	return Hit;
 }
 
@@ -208,14 +233,21 @@ void ABaseWeapon::SimulateWeaponFire()
 {
 	if (MuzzleFX)
 	{
-		MuzzlePSC = UGameplayStatics::SpawnEmitterAttached(MuzzleFX, Mesh1P, MuzzleAttachPoint);	
+		MuzzleNC = UNiagaraFunctionLibrary::SpawnSystemAttached(MuzzleFX, Mesh1P, MuzzleAttachPoint, FVector(1), FRotator(1), FVector(1), EAttachLocation::Type::SnapToTarget, true, ENCPoolMethod::AutoRelease);
 	}
-
-	UE_LOG(LogTemp, Log, TEXT("%i"), bPlayingFireAnim);
 
 	if (!bPlayingFireAnim)
 	{
-		PlayWeaponAnimation(FireAnim);
+		if(MyPawn->IsZoomIn())
+		{
+			PlayWeaponAnimation(FireAnimAds);
+			SetCurrentFireAnim(FireAnimAds);
+		}
+		else
+		{
+			PlayWeaponAnimation(FireAnim);
+			SetCurrentFireAnim(FireAnim);
+		}
 		bPlayingFireAnim = true;
 	}
 }
@@ -224,7 +256,7 @@ void ABaseWeapon::StopSimulatingWeaponFire()
 {
 	if (bPlayingFireAnim)
 	{
-		StopWeaponAnimation(FireAnim);
+		StopWeaponAnimation(CurrentFireAnim);
 		bPlayingFireAnim = false;
 	}
 }
@@ -282,6 +314,28 @@ void ABaseWeapon::HandleFiring()
 	LastFireTime = GetWorld()->GetTimeSeconds();
 }
 
+
+void ABaseWeapon::DetermineWeaponState()
+{
+	EWeaponState NewState = EWeaponState::Idle;
+
+	if (bIsEquipped)
+	{
+		if (bWantsToFire)
+		{
+			NewState = EWeaponState::Firing;
+		}
+	}
+	else if (bPendingEquip)
+	{
+		NewState = EWeaponState::Equipping;
+	}
+
+	
+	SetWeaponState(NewState);
+}
+
+
 void ABaseWeapon::SetWeaponState(EWeaponState NewState)
 {
 	const EWeaponState PrevState = CurrentWeaponState;
@@ -299,24 +353,6 @@ void ABaseWeapon::SetWeaponState(EWeaponState NewState)
 	}
 }
 
-void ABaseWeapon::DetermineWeaponState()
-{
-	EWeaponState NewState = EWeaponState::Idle;
-
-	if (bIsEquipped)
-	{
-		if (bWantsToFire && CanFire())
-		{
-			NewState = EWeaponState::Firing;
-		}
-	}
-	else if (bPendingEquip)
-	{
-		NewState = EWeaponState::Equipping;
-	}
-
-	SetWeaponState(NewState);
-}
 
 void ABaseWeapon::OnBurstStarted()
 {
@@ -389,5 +425,13 @@ void ABaseWeapon::SetOwningPawn(AShooterCharacter* NewOwner)
 		MyPawn = NewOwner;
 		// // Net owner for RPC calls.
 		// SetOwner(NewOwner);
+	}
+}
+
+void ABaseWeapon::SetCurrentFireAnim(UAnimMontage *NewAnimMontage)
+{
+	if(CurrentFireAnim != NewAnimMontage)
+	{
+		CurrentFireAnim = NewAnimMontage;
 	}
 }

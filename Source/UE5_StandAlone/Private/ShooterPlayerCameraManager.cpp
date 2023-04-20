@@ -20,11 +20,12 @@ void AShooterPlayerCameraManager::UpdateCamera(float DeltaTime)
 	{
 		const float FOV = MyPawn->IsZoomIn() ? ZoomFOV : NormalFOV;
 		DefaultFOV = FMath::FInterpTo(DefaultFOV,FOV, DeltaTime, 20.f);
+		// UE_LOG(LogTemp, Log, TEXT("%f FOV"), DefaultFOV);
 		GetCameraViewPoint(DefaultCameraLocation, DefaultCameraRotator);
+		
 	}
-
 	Super::UpdateCamera(DeltaTime);
-
+	
 	// if (MyPawn)
 	// {
 	// 	MyPawn->OnCameraUpdate(GetCameraLocation(), GetCameraRotation());
